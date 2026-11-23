@@ -3,20 +3,173 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>الجزيرة للصيانة</title>
+<title>الجزيرة - صيانة المعدات</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
-body{font-family:Arial;text-align:center;background:#f2f2f2;margin:0;padding:20px}
-.box{background:white;padding:25px;border-radius:15px;max-width:500px;margin:auto}
-h1{color:#0a7a42}
-a{display:block;background:#25D366;color:white;padding:15px;border-radius:10px;text-decoration:none;font-size:20px;margin-top:20px}
+body{font-family:system-ui;background:#f1f5f9}
+.card{background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+input,select,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;margin-top:6px}
+.btn{background:#0f766e;color:#fff;padding:11px;border-radius:10px;width:100%;font-weight:700}
+.btn2{background:#1e293b;color:#fff;padding:9px 14px;border-radius:10px}
+.tab{padding:9px 14px;border-radius:999px;background:#e2e8f0;font-weight:700}
+.tab.active{background:#0f766e;color:#fff}
+.badge{font-size:12px;padding:3px 9px;border-radius:999px;font-weight:700}
 </style>
 </head>
 <body>
-<div class="box">
-<h1>الجزيرة للصيانة</h1>
-<p>صيانة عامة - كهرباء - سباكة - تكييف</p>
-<p>صنعاء - اليمن</p>
-<a href="https://wa.me/967777000000">تواصل واتساب</a>
+<div class="max-w-5xl mx-auto p-3">
+<div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow">
+<div><h1 class="text-xl font-black">🛠️ الجزيرة - صيانة المعدات</h1><p class="text-sm text-gray-500">نظام إدارة الصيانة - اليمن</p></div>
+<div class="text-left"><span id="status" class="badge bg-yellow-100 text-yellow-800">جاري الاتصال...</span><p class="text-xs mt-1">المستخدم: <b id="userEmail">-</b></p></div>
 </div>
+
+<div class="flex gap-2 mt-3 overflow-auto">
+<button class="tab active" onclick="showTab('equip',this)">المعدات</button>
+<button class="tab" onclick="showTab('add',this)">+ إضافة معدة</button>
+<button class="tab" onclick="showTab('plans',this)">خطط الصيانة</button>
+<button class="tab" onclick="showTab('tasks',this)">المهام</button>
+<button class="tab" onclick="showTab('reports',this)">التقارير</button>
+</div>
+
+<!-- المعدات -->
+<div id="tab-equip" class="mt-4">
+<div class="card flex gap-2"><input id="search" placeholder="🔍 ابحث باسم المعدة أو الرقم..." oninput="loadData()"><select id="filterStatus" onchange="loadData()"><option value="">كل الحالات</option><option value="تعمل">تعمل</option><option value="تحت الصيانة">تحت الصيانة</option><option value="متوقفة">متوقفة</option><option value="تحتاج صيانة">تحتاج صيانة</option></select></div>
+<div id="equipList" class="grid md:grid-cols-2 gap-3 mt-3"></div>
+</div>
+
+<!-- إضافة -->
+<div id="tab-add" class="mt-4 hidden">
+<div class="card">
+<h2 class="font-bold text-lg">إضافة معدة جديدة</h2>
+<input id="eqName" placeholder="اسم المعدة * مثال: مولد كهرباء">
+<input id="eqCode" placeholder="رقم المعدة / الكود">
+<input id="eqType" placeholder="النوع - مثال: مولد / مضخة / مكيف">
+<input id="eqLocation" placeholder="الموقع - مثال: صنعاء - المبنى الرئيسي">
+<select id="eqStatus"><option>تعمل</option><option>تحت الصيانة</option><option>متوقفة</option><option>تحتاج صيانة</option></select>
+<input id="eqLast" type="date"><label class="text-xs text-gray-500">تاريخ آخر صيانة</label>
+<input id="eqNext" type="date"><label class="text-xs text-gray-500">تاريخ الصيانة القادمة</label>
+<textarea id="eqNotes" placeholder="ملاحظات"></textarea>
+<button class="btn mt-3" onclick="addEquipment()">💾 حفظ المعدة</button>
+</div>
+</div>
+
+<!-- الخطط -->
+<div id="tab-plans" class="mt-4 hidden">
+<div class="card">
+<h2 class="font-bold">خطة صيانة جديدة</h2>
+<input id="planTitle" placeholder="عنوان الخطة - مثال: صيانة شهرية للمولدات">
+<select id="planEquip"><option value="">اختر المعدة</option></select>
+<select id="planFreq"><option value="أسبوعية">أسبوعية</option><option value="شهرية">شهرية</option><option value="كل 3 أشهر">كل 3 أشهر</option><option value="سنوية">سنوية</option></select>
+<input id="planDate" type="date">
+<button class="btn mt-3" onclick="addPlan()">➕ إضافة الخطة</button>
+</div>
+<div id="planList" class="grid gap-3 mt-3"></div>
+</div>
+
+<!-- المهام -->
+<div id="tab-tasks" class="mt-4 hidden">
+<div class="card">
+<h2 class="font-bold">مهمة صيانة جديدة</h2>
+<input id="taskTitle" placeholder="وصف المهمة">
+<select id="taskEquip"><option value="">اختر المعدة</option></select>
+<select id="taskPriority"><option>عادية</option><option>مهمة</option><option>عاجلة</option></select>
+<input id="taskDate" type="date">
+<button class="btn mt-3" onclick="addTask()">➕ إضافة المهمة</button>
+</div>
+<div id="taskList" class="grid gap-3 mt-3"></div>
+</div>
+
+<!-- التقارير -->
+<div id="tab-reports" class="mt-4 hidden">
+<div class="grid grid-cols-3 gap-3 text-center">
+<div class="card"><h3 class="text-2xl font-black" id="cTotal">0</h3><p>إجمالي المعدات</p></div>
+<div class="card"><h3 class="text-2xl font-black text-green-600" id="cWork">0</h3><p>تعمل</p></div>
+<div class="card"><h3 class="text-2xl font-black text-red-600" id="cNeed">0</h3><p>تحتاج صيانة</p></div>
+</div>
+<div class="card mt-3"><h3 class="font-bold">معدات قريبة من الصيانة (خلال 14 يوم)</h3><div id="soonList" class="mt-2"></div></div>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBPNkMCqJ1iuDwJXpvCXpM60_xmW-PcaKw",
+  authDomain: "aljazeera-maintenance.firebaseapp.com",
+  projectId: "aljazeera-maintenance",
+  storageBucket: "aljazeera-maintenance.firebasestorage.app",
+  messagingSenderId: "632421407368",
+  appId: "1:632421407368:web:53da009c84c09abde91d3d",
+  measurementId: "G-B5SXD1FSWB"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+signInAnonymously(auth).catch(e=>{document.getElementById('status').textContent='خطأ اتصال: '+e.message});
+onAuthStateChanged(auth, u=>{
+  if(u){ document.getElementById('status').textContent='✅ متصل بـ Firebase'; document.getElementById('status').className='badge bg-green-100 text-green-800'; document.getElementById('userEmail').textContent='ضيف'; loadData(); }
+});
+
+window.showTab=(id,el)=>{
+  ['equip','add','plans','tasks','reports'].forEach(t=>document.getElementById('tab-'+t).classList.add('hidden'));
+  document.getElementById('tab-'+id).classList.remove('hidden');
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active')); el.classList.add('active');
+  if(id==='plans'||id==='tasks') loadSelects();
+  if(id==='reports') loadReports();
+};
+
+window.addEquipment=async()=>{
+  const name=document.getElementById('eqName').value.trim();
+  if(!name) return alert('اكتب اسم المعدة');
+  await addDoc(collection(db,'equipment'),{
+    name, code:document.getElementById('eqCode').value,
+    type:document.getElementById('eqType').value,
+    location:document.getElementById('eqLocation').value,
+    status:document.getElementById('eqStatus').value,
+    lastMaintenance:document.getElementById('eqLast').value,
+    nextMaintenance:document.getElementById('eqNext').value,
+    notes:document.getElementById('eqNotes').value,
+    createdAt:new Date().toISOString()
+  });
+  alert('✅ تم حفظ المعدة'); document.getElementById('eqName').value=''; loadData(); showTab('equip',document.querySelectorAll('.tab')[0]);
+};
+
+window.loadData=async()=>{
+  const snap=await getDocs(collection(db,'equipment'));
+  let list=[]; snap.forEach(d=>list.push({id:d.id,...d.data()}));
+  const q=document.getElementById('search').value.toLowerCase();
+  const f=document.getElementById('filterStatus').value;
+  list=list.filter(e=>(!q||(e.name+e.code+e.location).toLowerCase().includes(q)) && (!f||e.status===f));
+  document.getElementById('equipList').innerHTML=list.map(e=>`
+  <div class="card"><div class="flex justify-between"><b>${e.name||''}</b><span class="badge ${e.status==='تعمل'?'bg-green-100 text-green-800':e.status==='تحت الصيانة'?'bg-yellow-100': 'bg-red-100 text-red-800'}">${e.status||''}</span></div>
+  <p class="text-sm text-gray-500 mt-1">الكود: ${e.code||'-'} | النوع: ${e.type||'-'}<br>الموقع: ${e.location||'-'}</p>
+  <p class="text-xs">آخر صيانة: ${e.lastMaintenance||'-'} | القادمة: <b>${e.nextMaintenance||'-'}</b></p>
+  <p class="text-sm mt-1">${e.notes||''}</p>
+  <div class="flex gap-2 mt-3"><button class="btn2" onclick="markDone('${e.id}')">✅ تمت الصيانة</button><button class="btn2" style="background:#dc2626" onclick="delEquip('${e.id}')">حذف</button></div></div>`).join('') || '<p class="text-center text-gray-500">لا توجد معدات، أضف أول معدة</p>';
+  document.getElementById('cTotal').textContent=list.length;
+};
+
+window.delEquip=async(id)=>{ if(confirm('حذف المعدة؟')){ await deleteDoc(doc(db,'equipment',id)); loadData(); } };
+window.markDone=async(id)=>{ const today=new Date().toISOString().slice(0,10); const next=new Date(); next.setMonth(next.getMonth()+1); await updateDoc(doc(db,'equipment',id),{lastMaintenance:today,nextMaintenance:next.toISOString().slice(0,10),status:'تعمل'}); alert('✅ تم تحديث الصيانة'); loadData(); };
+
+window.loadSelects=async()=>{
+  const snap=await getDocs(collection(db,'equipment')); let opt='<option value="">اختر المعدة</option>'; snap.forEach(d=>opt+=`<option value="${d.data().name}">${d.data().name} - ${d.data().code||''}</option>`);
+  document.getElementById('planEquip').innerHTML=opt; document.getElementById('taskEquip').innerHTML=opt;
+  const p=await getDocs(collection(db,'plans')); document.getElementById('planList').innerHTML=''; p.forEach(d=>{const x=d.data(); document.getElementById('planList').innerHTML+=`<div class="card flex justify-between"><div><b>${x.title}</b><p class="text-sm">${x.equipment} - ${x.frequency} - ${x.date}</p></div><button onclick="delDoc('plans','${d.id}')" class="text-red-600">حذف</button></div>`});
+  const t=await getDocs(collection(db,'tasks')); document.getElementById('taskList').innerHTML=''; t.forEach(d=>{const x=d.data(); document.getElementById('taskList').innerHTML+=`<div class="card flex justify-between"><div><b>${x.title}</b><p class="text-sm">${x.equipment} - ${x.priority} - ${x.date} - ${x.done?'✅ منجز':'⏳ قيد التنفيذ'}</p></div><div class="flex gap-2"><button onclick="toggleTask('${d.id}',${!x.done})" class="btn2">تم / إلغاء</button><button onclick="delDoc('tasks','${d.id}')" class="text-red-600">حذف</button></div></div>`});
+};
+window.addPlan=async()=>{ await addDoc(collection(db,'plans'),{title:document.getElementById('planTitle').value,equipment:document.getElementById('planEquip').value,frequency:document.getElementById('planFreq').value,date:document.getElementById('planDate').value}); alert('تمت إضافة الخطة'); loadSelects(); };
+window.addTask=async()=>{ await addDoc(collection(db,'tasks'),{title:document.getElementById('taskTitle').value,equipment:document.getElementById('taskEquip').value,priority:document.getElementById('taskPriority').value,date:document.getElementById('taskDate').value,done:false}); alert('تمت إضافة المهمة'); loadSelects(); };
+window.toggleTask=async(id,done)=>{ await updateDoc(doc(db,'tasks',id),{done}); loadSelects(); };
+window.delDoc=async(col,id)=>{ await deleteDoc(doc(db,col,id)); loadSelects(); };
+window.loadReports=async()=>{
+  const snap=await getDocs(collection(db,'equipment')); let total=0,work=0,need=0,soon=''; const now=new Date(); snap.forEach(d=>{const e=d.data(); total++; if(e.status==='تعمل')work++; if(e.status==='تحتاج صيانة'||e.status==='متوقفة')need++; if(e.nextMaintenance){ const diff=(new Date(e.nextMaintenance)-now)/86400000; if(diff>=0&&diff<=14) soon+=`<p>⚠️ ${e.name} - بعد ${Math.ceil(diff)} يوم - ${e.nextMaintenance}</p>`; }});
+  document.getElementById('cTotal').textContent=total; document.getElementById('cWork').textContent=work; document.getElementById('cNeed').textContent=need; document.getElementById('soonList').innerHTML=soon||'لا توجد صيانة قريبة';
+};
+</script>
 </body>
 </html>
